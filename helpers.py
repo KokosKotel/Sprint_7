@@ -1,11 +1,14 @@
+import allure
 import requests
 import random
 import string
-from locators import LocatorsCourier, LocatorsOrder
+from data import CreateOrder
+from urls import CourierURLs, OrderURLs
 
 
 # метод регистрации нового курьера возвращает список из логина и пароля
 # если регистрация не удалась, возвращает пустой список
+@allure.step("Регистрируем новый профиль курьера")
 def register_new_courier_and_return_login_password():
     # метод генерирует строку, состоящую только из букв нижнего регистра, в качестве параметра передаём длину строки
     def generate_random_string(length):
@@ -29,7 +32,7 @@ def register_new_courier_and_return_login_password():
     }
 
     # отправляем запрос на регистрацию курьера и сохраняем ответ в переменную response
-    response = requests.post(LocatorsCourier.create_courier, data=payload)
+    response = requests.post(CourierURLs.create_courier, data=payload)
 
     # если регистрация прошла успешно (код ответа 201), добавляем в список логин и пароль курьера
     if response.status_code == 201:
@@ -41,6 +44,7 @@ def register_new_courier_and_return_login_password():
     return login_pass, response
 
 
+@allure.step("Заходим в новый профиль курьера")
 def login_courier():
     credentials, _ = register_new_courier_and_return_login_password()
     login, password, first_name = credentials
@@ -48,26 +52,18 @@ def login_courier():
         "login": login,
         "password": password
     }
-    response = requests.post(LocatorsCourier.login_courier, json=payload)
+    response = requests.post(CourierURLs.login_courier, json=payload)
     return response
 
 
+@allure.step("Регистрируем новый заказ")
 def register_new_order():
-    order_payload = {
-        "firstName": "Naruto",
-        "lastName": "Uchiha",
-        "address": "Konoha, 142 apt.",
-        "metroStation": 4,
-        "phone": "+7 800 355 35 35",
-        "rentTime": 5,
-        "deliveryDate": "2020-06-06",
-        "comment": "Saske, come back to Konoha",
-        "color": ["BLACK"]
-    }
-    order_response = requests.post(LocatorsOrder.order, json=order_payload)
+    order_payload = CreateOrder.order_base
+    order_response = requests.post(OrderURLs.order, json=order_payload)
     return order_response
 
 
+@allure.step("Получаем id курьера")
 def get_courier_id():
     credentials, _ = register_new_courier_and_return_login_password()
     login, password, first_name = credentials
@@ -75,11 +71,12 @@ def get_courier_id():
         "login": login,
         "password": password
     }
-    response_courier = requests.post(LocatorsCourier.login_courier, json=payload)
+    response_courier = requests.post(CourierURLs.login_courier, json=payload)
     courier_id = response_courier.json()["id"]
     return courier_id
 
 
+@allure.step("Получаем id заказа")
 def get_order_id():
     order_response = register_new_order()
     order_id = order_response.json()["track"]

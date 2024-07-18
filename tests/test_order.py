@@ -1,8 +1,7 @@
-from unittest.mock import patch
 import allure
 import pytest
 import requests
-from locators import LocatorsOrder
+from urls import OrderURLs
 
 
 @allure.feature("Тест заказов")
@@ -15,8 +14,7 @@ class TestOrders:
         (["BLACK", "GREY"], 201),
         ([], 201)
     ])
-    @patch("requests.post")
-    def test_create_order_color(self, mock_post, colors, expected_status):
+    def test_create_order_color(self, colors, expected_status):
         payload = {
             "firstName": "Naruto",
             "lastName": "Uchiha",
@@ -28,25 +26,14 @@ class TestOrders:
             "comment": "Saske, come back to Konoha",
             "color": colors
         }
-        mock_response = {
-            "track": "123456"
-        }
-        mock_post.return_value.status_code = 201
-        mock_post.return_value.json.return_value = mock_response
-        response = requests.post(LocatorsOrder.order, json=payload)
+        response = requests.post(OrderURLs.order, json=payload)
         assert response.status_code == expected_status
         assert "track" in response.json()
 
     @allure.title("Тест получения списка заказа")
     @allure.description("Тест проверяет успешное получение списка заказов")
-    @patch("requests.get")
-    def test_list_order(self, mock_get):
-        mock_response = {
-            "orders": [{"id": 12}, {"id": 123}]
-        }
-        mock_get.return_value.status_code = 200
-        mock_get.return_value.json.return_value = mock_response
-        response = requests.get(LocatorsOrder.get_order)
+    def test_list_order(self):
+        response = requests.get(OrderURLs.get_order)
         assert response.status_code == 200
         assert isinstance(response.json().get("orders"), list)
         assert len(response.json().get("orders")) > 0
